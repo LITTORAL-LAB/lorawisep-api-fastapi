@@ -1,14 +1,12 @@
-version: '3.8'
-
 networks:
-  fastapi_network:
+  lorawisep_fastapi_network:
     driver: bridge
 
 services:
   # Serviço para a aplicação FastAPI
   web:
     build: .
-    container_name: fastapi_app
+    container_name: lorawisep_fastapi_app
     volumes:
       - ./app:/usr/src/app/app
     ports:
@@ -18,24 +16,24 @@ services:
     env_file:
       - .env
     networks:
-      - fastapi_network
+      - lorawisep_fastapi_network
     stdin_open: true
     tty: true
 
   # Serviço para o banco de dados PostgreSQL
   db:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: postgres_db_lorawisep
     environment:
-      POSTGRES_USER: fastapi_user
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: fastapi_db
+      POSTGRES_USER: lorawisep_fastapi_user
+      POSTGRES_PASSWORD: lorawisep_password123
+      POSTGRES_DB: lorawisep_fastapi_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - fastapi_network
+      - lorawisep_fastapi_network
 
 volumes:
   postgres_data:
