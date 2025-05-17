@@ -1,26 +1,34 @@
-# Usa a imagem oficial do Python como base
-FROM python:3.9-slim
+# Etapa 1: Escolha uma imagem base leve com suporte ao Python
+FROM python:3.13-slim
 
-# Instala dependências do sistema
+# Definir variáveis de ambiente
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    APP_HOME=/app
+
+# Definir o diretório de trabalho
+WORKDIR $APP_HOME
+
+# Instalar dependências do sistema necessárias para psycopg2
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    python3-dev \
+    poppler-utils \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Define o diretório de trabalho no contêiner
-WORKDIR /usr/src/app
+# Copiar apenas os arquivos necessários para instalação das dependências
+COPY requirements.txt .
 
-# Copia o arquivo de dependências para dentro do contêiner
-COPY requirements.txt ./
-
-# Instala as dependências do Python
+# Instalar as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia o código da aplicação para o contêiner
+# Copiar o código-fonte da aplicação para o contêiner
 COPY . .
 
-# Expõe a porta que a FastAPI vai rodar
+# Expor a porta da aplicação
 EXPOSE 8000
 
-# Comando para rodar a aplicação FastAPI
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Executar migrações Alembic ao iniciar o contêiner e iniciar o servidor Uvicorn
+ENTRYPOINT ["sh", "-c", "alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000"]

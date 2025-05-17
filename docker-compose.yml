@@ -8,9 +8,9 @@ services:
     build: .
     container_name: lorawisep_fastapi_app
     volumes:
-      - ./app:/usr/src/app/app
+      - .:/app
     ports:
-      - "8000:8000"
+      - "8888:8000"
     depends_on:
       - db
     env_file:
