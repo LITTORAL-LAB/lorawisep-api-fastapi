@@ -11,6 +11,7 @@ from api.repositories.password_reset_repository import PasswordResetRepository
 from api.repositories.politica_repository import PoliticaRepository
 from api.repositories.usuario_repository import UsuarioRepository
 from api.services.conta_service import ContaService
+from api.services.ns3_service import NS3SimulationService
 from api.services.password_reset_service import PasswordResetService
 from api.services.politica_service import PoliticaService
 from api.services.usuario_service import UsuarioService
@@ -61,3 +62,12 @@ def get_password_reset_deps(db: T_Session) -> PasswordResetDependencies:
     return PasswordResetDependencies(db)
 
 T_PasswordResetDeps = Annotated[PasswordResetDependencies, Depends(get_password_reset_deps)]
+
+class NS3SimulationDependencies:
+    def __init__(self, db: T_Session):
+        self.service = NS3SimulationService()
+
+def get_simulation_deps(db: T_Session) -> NS3SimulationDependencies:
+    return NS3SimulationDependencies(db)
+
+T_NS3SimulationDeps = Annotated[NS3SimulationDependencies, Depends(get_simulation_deps)]

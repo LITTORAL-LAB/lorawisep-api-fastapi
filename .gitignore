@@ -4,3 +4,4 @@ __pycache__
 templates
 crud_generator.py
 .env
+scripts

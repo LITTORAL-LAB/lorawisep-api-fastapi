@@ -9,6 +9,7 @@ services:
     container_name: lorawisep_fastapi_app
     volumes:
       - .:/app
+      - /home/pedro/Documentos/ns-3-dev/:/ns3
     ports:
       - "8888:8000"
     depends_on:
