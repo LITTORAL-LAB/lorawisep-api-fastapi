@@ -14,6 +14,7 @@ class NS3SimulationService:
         self.scripts_path.mkdir(parents=True, exist_ok=True) # parents=True para criar diretórios pai se não existirem
         
     async def generate_gateways(self, devices: list[dict]):
+        print(f"DEBUG: generate_gateways received devices: {devices}")
         """Gera gateways a partir dos dispositivos usando K-means"""
         try:
             if not devices:
