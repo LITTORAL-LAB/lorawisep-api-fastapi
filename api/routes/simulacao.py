@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends
 
 from api.core.dependencies import T_CurrentUser, T_Session, T_NS3SimulationDeps
-from api.core.response_model import SingleResponse
 from api.core.security import check_access, get_current_user
 
-from api.schemas.simulation import SimulationParameters
 
 router = APIRouter(prefix="/simulation", tags=["Simulation"], dependencies=[Depends(get_current_user)])
 
-@router.post("/gateways", response_model=SingleResponse)
+@router.post("/gateways")
 async def generate_gateways(
     devices: list[dict[str, float]], 
     db: T_Session, 
@@ -20,9 +18,21 @@ async def generate_gateways(
     gateways = await deps.service.generate_gateways(devices)
     return {"data": gateways}
 
-@router.post("/run", response_model=SingleResponse)
+# [
+#   {
+#     "lat": 0,
+#     "lng": 0
+#   },
+#   {
+#     "lat": 10,
+#     "lng": 10
+#   }
+# ]
+
+
+@router.post("/run")
 async def run_simulation(
-    params: SimulationParameters, 
+    devices: list[dict[str, float]], 
     db: T_Session, 
     deps: T_NS3SimulationDeps, 
     current_user: T_CurrentUser
@@ -31,10 +41,11 @@ async def run_simulation(
     check_access(db, current_user, action="Simulation:Run")
     
     # Primeiro gera os gateways
-    await deps.service.generate_gateways([d.dict() for d in params.devices])
+    await deps.service.generate_gateways(devices)
     
     # Depois roda a simulação
-    result = await deps.service.run_simulation(params.dict())
+    result = await deps.service.run_simulation(devices)
+    print("Simulation run successfully")
     
     return {
         "data": result,
