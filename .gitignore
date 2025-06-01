@@ -5,3 +5,4 @@ templates
 crud_generator.py
 .env
 scripts
+simulation_files

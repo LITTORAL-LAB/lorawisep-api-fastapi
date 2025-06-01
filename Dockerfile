@@ -1,34 +1,55 @@
-# Etapa 1: Escolha uma imagem base leve com suporte ao Python
-FROM python:3.13-slim
+# Etapa 1: Use uma imagem base com suporte completo
+FROM ubuntu:22.04
 
 # Definir variáveis de ambiente
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    APP_HOME=/app
+    APP_HOME=/app \
+    NS3_HOME=/ns3
 
-# Definir o diretório de trabalho
-WORKDIR $APP_HOME
-
-# Instalar dependências do sistema necessárias para psycopg2
+# Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
-    gcc \
+    g++ \
+    python3 \
+    cmake \
+    ninja-build \
+    git \
+    ccache \
+    libgsl-dev \
+    libsqlite3-dev \
+    libxml2-dev \
     libpq-dev \
     python3-dev \
+    python3-pip \
     poppler-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar apenas os arquivos necessários para instalação das dependências
-COPY requirements.txt .
+# Criar diretórios de trabalho
+WORKDIR $NS3_HOME
 
-# Instalar as dependências do Python
+# Baixar e configurar ns-3 com o módulo LoRaWAN (etapa corrigida)
+RUN git clone https://gitlab.com/nsnam/ns-3-dev.git . && \
+    git clone https://github.com/signetlabdei/lorawan src/lorawan && \
+    cd src/lorawan && \
+    NS3_VERSION=$(cat NS3-VERSION | sed 's/release //') && \
+    cd ../.. && \
+    git checkout -b lorawan-branch $NS3_VERSION
+
+# Compilar ns-3 com o módulo LoRaWAN
+RUN ./ns3 configure --enable-tests --enable-examples --enable-modules lorawan && \
+    ./ns3 build
+
+# Configurar ambiente Python
+WORKDIR $APP_HOME
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o código-fonte da aplicação para o contêiner
+# Copiar o código da aplicação
 COPY . .
 
 # Expor a porta da aplicação
 EXPOSE 8000
 
-# Executar migrações Alembic ao iniciar o contêiner e iniciar o servidor Uvicorn
+# Comando de inicialização
 ENTRYPOINT ["sh", "-c", "alembic upgrade heads && uvicorn main:app --host 0.0.0.0 --port 8000"]
