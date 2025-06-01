@@ -11,7 +11,7 @@ services:
       - .:/app
       # - /home/pedro/Documentos/ns-3-dev/:/ns3
       - ./simulation_files:/app/scripts
-      - /home/wisep/ns-3-allinone/ns-3.43:/ns3
+      - /home/wisep/ns-3-allinone/ns-3.43/:/ns3
     environment:
       - NS3_PATH=/ns3
       - LD_LIBRARY_PATH=/ns3/build/lib
