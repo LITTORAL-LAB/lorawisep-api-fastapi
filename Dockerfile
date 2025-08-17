@@ -37,7 +37,7 @@ RUN git clone https://gitlab.com/nsnam/ns-3-dev.git . && \
     git checkout -b lorawan-branch $NS3_VERSION
 
 # Compilar ns-3 com o módulo LoRaWAN
-RUN ./ns3 configure --enable-examples --enable-modules lorawan && \
+RUN ./ns3 configure --enable-tests --enable-examples --enable-modules lorawan && \
     ./ns3 build
 
 # Configurar ambiente Python
