@@ -127,8 +127,8 @@ class NS3SimulationService:
     async def run_simulation(self, params: dict):
         """Executa a simulação no NS3"""
         try:
-            logger.info("ns3_path:", self.ns3_path)
-            logger.info("path:", self.scripts_path)
+            logger.info(f"ns3_path: {self.ns3_path}")
+            logger.info(f"scripts_path: {self.scripts_path}")
             devices_file = self.scripts_path / 'devices.csv'
             gateways_file = self.scripts_path / 'gateways.csv'
             output_folder = self.scripts_path / 'output'
@@ -148,7 +148,7 @@ class NS3SimulationService:
                 f'--out_folder={output_folder}'
             ])
             
-            logger.info("Command:", cmd)
+            logger.info(f"Command: {cmd}")
 
             result = subprocess.run(
                 cmd,
@@ -158,9 +158,9 @@ class NS3SimulationService:
             )
 
             # Dump full stdout/stderr to help debugging regardless of success
-            logger.info("NS-3 return code:", result.returncode)
-            logger.info("NS-3 STDOUT:\n", result.stdout)
-            logger.info("NS-3 STDERR:\n", result.stderr)
+            logger.info(f"NS-3 return code: {result.returncode}")
+            logger.info(f"NS-3 STDOUT:\n{result.stdout}")
+            logger.info(f"NS-3 STDERR:\n{result.stderr}")
 
             if result.returncode != 0:
                 raise HTTPException(
