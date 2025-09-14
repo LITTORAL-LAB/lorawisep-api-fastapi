@@ -36,6 +36,9 @@ RUN git clone https://gitlab.com/nsnam/ns-3-dev.git . && \
     cd ../.. && \
     git checkout -b lorawan-branch $NS3_VERSION
 
+# Copy simulation sources before building
+COPY ns3_files $NS3_HOME/scratch
+
 # Compilar ns-3 com o módulo LoRaWAN
 RUN ./ns3 configure --enable-tests --enable-examples --enable-modules lorawan && \
     ./ns3 build
