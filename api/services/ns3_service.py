@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from fastapi import HTTPException
 from pathlib import Path
+from loguru import logger
 
 class NS3SimulationService:
     def __init__(self):
@@ -14,7 +15,7 @@ class NS3SimulationService:
         self.scripts_path.mkdir(parents=True, exist_ok=True) # parents=True para criar diretórios pai se não existirem
         
     async def generate_gateways(self, devices: list[dict]):
-        print(f"DEBUG: generate_gateways received devices: {devices}")
+        logger.info(f"DEBUG: generate_gateways received devices: {devices}")
         """Gera gateways a partir dos dispositivos usando K-means"""
         try:
             if not devices:
@@ -48,7 +49,7 @@ class NS3SimulationService:
         except Exception as e:
             # Log da exceção para melhor depuração no servidor
             import traceback
-            print(f"Error in generate_gateways: {traceback.format_exc()}")
+            logger.info(f"Error in generate_gateways: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"Gateway generation failed: {str(e)}")
 
     def _find_optimal_clusters(self, df: pd.DataFrame, max_clusters=10) -> int:
@@ -126,8 +127,8 @@ class NS3SimulationService:
     async def run_simulation(self, params: dict):
         """Executa a simulação no NS3"""
         try:
-            print("ns3_path:", self.ns3_path)
-            print("path:", self.scripts_path)
+            logger.info("ns3_path:", self.ns3_path)
+            logger.info("path:", self.scripts_path)
             devices_file = self.scripts_path / 'devices.csv'
             gateways_file = self.scripts_path / 'gateways.csv'
             output_folder = self.scripts_path / 'output'
@@ -147,7 +148,7 @@ class NS3SimulationService:
                 f'--out_folder={output_folder}'
             ])
             
-            print("Command:", cmd)
+            logger.info("Command:", cmd)
 
             result = subprocess.run(
                 cmd,
@@ -155,9 +156,17 @@ class NS3SimulationService:
                 capture_output=True,
                 text=True
             )
-            
+
+            # Dump full stdout/stderr to help debugging regardless of success
+            logger.info("NS-3 return code:", result.returncode)
+            logger.info("NS-3 STDOUT:\n", result.stdout)
+            logger.info("NS-3 STDERR:\n", result.stderr)
+
             if result.returncode != 0:
-                raise HTTPException(500, f"NS3 simulation failed: {result.stderr}")
+                raise HTTPException(
+                    500,
+                    f"NS3 simulation failed (code {result.returncode}): {result.stderr or result.stdout}"
+                )
             
             # Processa a saída do comando para extrair os resultados
             output_lines = result.stdout.splitlines()
@@ -173,7 +182,7 @@ class NS3SimulationService:
             
             if values_str is None:
                 error_detail = "Could not find the numeric values line after 'Global MAC Packet Counts' in NS3 output."
-                print(f"NS-3 Full STDOUT for error '{error_detail}':\n{result.stdout}")
+                logger.info(f"NS-3 Full STDOUT for error '{error_detail}':\n{result.stdout}")
                 raise HTTPException(500, error_detail)
 
             try:
@@ -182,7 +191,7 @@ class NS3SimulationService:
                     raise ValueError("Expected at least 3 numeric values.")
             except ValueError as ve:
                 error_detail = f"Could not convert '{values_str}' to floats: {ve}"
-                print(f"NS-3 Full STDOUT for error '{error_detail}':\n{result.stdout}")
+                logger.info(f"NS-3 Full STDOUT for error '{error_detail}':\n{result.stdout}")
                 raise HTTPException(500, error_detail)
 
             # Lê as posições dos gateways do arquivo CSV
@@ -191,7 +200,7 @@ class NS3SimulationService:
                 gateways_df = pd.read_csv(gateways_file, header=None, names=['lat', 'lng'])
                 gateways_positions = gateways_df.to_dict('records')
             except Exception as e:
-                print(f"Warning: Could not read gateway positions: {str(e)}")
+                logger.info(f"Warning: Could not read gateway positions: {str(e)}")
 
             result_dict = {
                 "sent_packets": numeric_values[0],
