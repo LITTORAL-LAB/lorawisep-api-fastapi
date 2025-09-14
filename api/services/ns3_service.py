@@ -133,6 +133,8 @@ class NS3SimulationService:
             gateways_file = self.scripts_path / 'gateways.csv'
             output_folder = self.scripts_path / 'output'
             output_folder.mkdir(exist_ok=True)
+            # ns-3 C++ salva arquivos em subpastas; garanta que pelo menos "status" exista
+            (output_folder / 'status').mkdir(parents=True, exist_ok=True)
             
             # Comando base
             cmd = [
@@ -187,8 +189,12 @@ class NS3SimulationService:
 
             try:
                 numeric_values = [float(v) for v in values_str.split()]
-                if len(numeric_values) < 3:
-                    raise ValueError("Expected at least 3 numeric values.")
+                if len(numeric_values) == 2:
+                    sent, received = numeric_values
+                    ratio = received / sent if sent != 0 else 0
+                    numeric_values.append(ratio)
+                elif len(numeric_values) < 2:
+                    raise ValueError("Expected at least 2 numeric values from NS-3 output.")
             except ValueError as ve:
                 error_detail = f"Could not convert '{values_str}' to floats: {ve}"
                 logger.info(f"NS-3 Full STDOUT for error '{error_detail}':\n{result.stdout}")
@@ -205,7 +211,7 @@ class NS3SimulationService:
             result_dict = {
                 "sent_packets": numeric_values[0],
                 "received_packets": numeric_values[1],
-                "received_ratio": numeric_values[2]
+                "received_ratio": numeric_values[2] if len(numeric_values) > 2 else None
             }
             
             return {
